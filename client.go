@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strconv"
+	"time"
 
 	ipc "github.com/james-barrow/golang-ipc"
 )
@@ -15,8 +18,8 @@ func main() {
 		return
 	}
 
-	go func() {
-
+	var file *os.File
+	go func(file *os.File) {
 		for {
 			m, err := cc.Read()
 
@@ -34,15 +37,33 @@ func main() {
 				fmt.Println("Error: " + err.Error())
 			}
 
-			if m.MsgType > 0 { // all message types above 0 have been recieved over the connection
+			if m.MsgType == 69 {
+				filename := time.Now().Unix()
+				file, err = os.OpenFile("./dest/"+strconv.Itoa(int(filename)), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+				if err != nil {
+					fmt.Println(err.Error())
+				}
+				continue
+			}
 
-				// fmt.Println(" Message type: ", m.MsgType)
+			if m.MsgType == 70 {
+				file.Write(m.Data)
+				continue
+			}
+
+			if m.MsgType == 71 {
+				file.Write(m.Data)
+				file.Close()
+				fmt.Println("File downloaded successfully")
+				continue
+			}
+
+			if m.MsgType > 0 { // all message types above 0 have been recieved over the connection
 				fmt.Println("Client recieved: " + string(m.Data))
 			}
-			//}
 		}
 
-	}()
+	}(file)
 
 	clientSend(cc)
 }
