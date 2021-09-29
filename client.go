@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"kij-block-cipher/encrypt"
 	"os"
 	"strconv"
 	"time"
@@ -47,7 +48,8 @@ func main() {
 			}
 
 			if m.MsgType == 70 {
-				file.Write(m.Data)
+				data := encrypt.Aes_decrypt(m.Data)
+				file.Write(data)
 				continue
 			}
 
