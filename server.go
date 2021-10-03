@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"sync"
 
-	"kij-block-cipher/encrypt"
+	aes "kij-block-cipher/encrypt"
 
 	ipc "github.com/james-barrow/golang-ipc"
 )
@@ -62,7 +62,7 @@ func sendFile(sc *ipc.Server) {
 			sc.Write(71, []byte{})
 			break
 		}
-		buffer = encrypt.Aes_encrypt(buffer)
+		buffer = aes.Aes_encrypt(buffer)
 		sc.Write(70, buffer)
 	}
 	return
