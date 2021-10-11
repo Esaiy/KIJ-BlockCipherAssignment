@@ -177,14 +177,18 @@ func expandKey(key []byte) [][]byte {
 				rcon <<= 1
 			} else {
 				// xor dengan i-4
-				expandedKey[0][idx] = expandedKey[0][idx] ^ expandedKey[0][idx-4]
-				expandedKey[1][idx] = expandedKey[1][idx] ^ expandedKey[1][idx-4]
-				expandedKey[2][idx] = expandedKey[2][idx] ^ expandedKey[2][idx-4]
-				expandedKey[3][idx] = expandedKey[3][idx] ^ expandedKey[3][idx-4]
+				expandedKey[0][i] = expandedKey[0][i] ^ expandedKey[0][i-4]
+				expandedKey[1][i] = expandedKey[1][i] ^ expandedKey[1][i-4]
+				expandedKey[2][i] = expandedKey[2][i] ^ expandedKey[2][i-4]
+				expandedKey[3][i] = expandedKey[3][i] ^ expandedKey[3][i-4]
 			}
 		}
 	}
 	return expandedKey
+}
+
+func addRoundKey() {
+
 }
 
 func rotateRow(row []byte, shift int) []byte {
