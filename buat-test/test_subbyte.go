@@ -27,7 +27,7 @@ func subByte(b byte) byte {
 
 func convertToOneDimension(ready_to_change_1_dim [4][4]byte) []byte {
 	// ubah jadi 1 dimensi
-	var firststep_array []byte
+	firststep_array := make([]byte, 16)
 	count_convert := 0
 	for i := 0; i < 4; i++ {
 		for j := 0; j < 4; j++ {
@@ -46,7 +46,7 @@ func Aes_decrypt_scratch_subbytes(ready_to_change_1_dim [4][4]byte) []byte {
 	var firststep_array = convertToOneDimension(ready_to_change_1_dim)
 
 	// Fungsi subbytes
-	var new_array []byte
+	var new_array = make([]byte, 16)
 	i := 0
 	for i < 16 {
 		// refference: https://stackoverflow.com/questions/8032170/how-to-assign-string-to-bytes-array
