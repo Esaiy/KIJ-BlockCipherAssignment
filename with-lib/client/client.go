@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"time"
+
 	// aes "kij-block-cipher/encrypt"
 	"kij-block-cipher/pkg/aes-lib"
 	"os"
@@ -20,6 +22,7 @@ func main() {
 
 	var file *os.File
 	go func(file *os.File) {
+		average := []int64{}
 		for {
 			m, err := cc.Read()
 
@@ -47,7 +50,10 @@ func main() {
 			}
 
 			if m.MsgType == 70 {
+				start := time.Now()
 				data := aes.Decrypt(m.Data)
+				duration := time.Since(start)
+				average = append(average, duration.Microseconds())
 				// data = m.Data
 				file.Write(data)
 				continue
@@ -58,6 +64,12 @@ func main() {
 				// file.Write(data)
 				file.Close()
 				fmt.Println("File downloaded successfully")
+				var total int64 = 0
+				for i := range average {
+					total += average[i]
+				}
+				hasil := float64(total) / float64(len(average))
+				fmt.Println("Average decrypt time :", hasil, "microsecond")
 				continue
 			}
 

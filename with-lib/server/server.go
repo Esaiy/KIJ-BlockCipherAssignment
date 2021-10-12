@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 
 	// aes "kij-block-cipher/encrypt"
 
@@ -53,8 +54,9 @@ func sendFile(sc *ipc.Server) {
 	const maxChunk = 2048 - 16
 	buffer := make([]byte, maxChunk)
 	i := 0
+	average := []int64{}
 	for {
-		fmt.Println(i)
+		// fmt.Println(i)
 		i++
 		n, err := file.Read(buffer)
 		buffer := buffer[:n]
@@ -64,10 +66,19 @@ func sendFile(sc *ipc.Server) {
 			}
 			sc.Write(71, []byte{})
 			fmt.Println("done")
+			var total int64 = 0
+			for i := range average {
+				total += average[i]
+			}
+			hasil := float64(total) / float64(len(average))
+			fmt.Println("Average encrypt time :", hasil, "microsecond")
 			break
 		}
 		// fmt.Println(buffer)
+		start := time.Now()
 		buffer = aes.Encrypt(buffer)
+		duration := time.Since(start)
+		average = append(average, duration.Microseconds())
 		sc.Write(70, buffer)
 	}
 	return

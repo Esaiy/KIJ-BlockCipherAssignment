@@ -290,7 +290,15 @@ func rotateRow(row []byte, shift int) []byte {
 	return temp
 }
 
-func Encrypt(plaintext, iv []byte) []byte {
+func Encrypt()(plaintext, iv []byte) []byte {
+	
+}
+
+func Decrypt(ciphertext []byte) []byte {
+
+}
+
+func Encrypt16Byte(plaintext, iv []byte) []byte {
 	// buat cipher
 	blockPlaintext := changeToMultiSlice(plaintext)
 	ciphertext := newCipher(iv)
@@ -305,7 +313,7 @@ func Encrypt(plaintext, iv []byte) []byte {
 	return result
 }
 
-func Decrypt(ciphertext []byte) []byte {
+func Decrypt16Byte(ciphertext []byte) []byte {
 	// ambil iv
 	iv := ciphertext[:16]
 	cipherPart := ciphertext[16:]
