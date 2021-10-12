@@ -24,14 +24,17 @@ func Aes_decrypt_scratch_mixcolumn(thirdstep_array [][]byte) [][]byte {
 	// reference: https://gist.github.com/vwxyzjn/bcac5f97b5abb7708773a28b82a809b4
 	// reference: https://blog.tclaverie.eu/posts/understanding-golangs-aes-implementation-t-tables/
 	// multiply
-	var static_matrix = [4][4]byte{
+	var static_matrix = [][]byte{
 		{02, 03, 01, 01},
 		{01, 02, 03, 01},
 		{01, 01, 02, 03},
 		{03, 01, 01, 02},
 	}
 
-	var new_array [][]byte
+	var new_array = make([][]byte, 4)
+	for i := 0; i < 4; i++ {
+		new_array[i] = make([]byte, 4)
+	}
 	for i := 0; i < 4; i++ {
 		for j := 0; j < 4; j++ {
 			for k := 0; k < 4; k++ {
