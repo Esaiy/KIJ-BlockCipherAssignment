@@ -248,10 +248,13 @@ func expandKey(key []byte) [][]byte {
 }
 
 func AddRoundKey(block [][]byte, round int) [][]byte {
-	var result [][]byte
+	var result = make([][]byte, 4)
+	for i := 0; i < 4; i++ {
+		result[i] = make([]byte, 4)
+	}
 	for i := 0; i < 4; i++ {
 		for j := 0; j < 4; j++ {
-			result[i][j] = block[i][j] ^ expandedKey[i+(4*(round-1))][j]
+			result[i][j] = block[i][j] ^ expandedKey[i][j+(4*(round))]
 		}
 	}
 	return result
