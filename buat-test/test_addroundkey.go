@@ -1,0 +1,18 @@
+package main
+
+import (
+	"fmt"
+	"kij-block-cipher/decrypt"
+)
+
+func main() {
+	var dummy_matrix = [][]byte{
+		{0x19, 0xa0, 0x9a, 0xe9},
+		{0x3d, 0xf4, 0xc6, 0xf8},
+		{0xe3, 0xe2, 0x8d, 0x48},
+		{0xbe, 0x2b, 0x2a, 0x08},
+	}
+
+	data := decrypt.AddRoundKey(dummy_matrix, 6)
+	fmt.Println(data)
+}

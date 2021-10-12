@@ -2,8 +2,14 @@ package decrypt
 
 // refference: https://www.hrpub.org/download/20171130/CSIT2-13510193.pdf
 // refference: https://www.commonlounge.com/discussion/e32fdd267aaa4240a4464723bc74d0a5
-var key = []byte("1234567890123456")
+var key = []byte{
+	0x2b, 0x28, 0xab, 0x09,
+	0x7e, 0xae, 0xf7, 0xcf,
+	0x15, 0xd2, 0x15, 0x4f,
+	0x16, 0xa6, 0x88, 0x3c,
+}
 var expandedKey = expandKey(key)
+var ExportedKey = expandKey(key)
 
 var sbox = [256]byte{
 	//0     1    2      3     4    5     6     7      8    9     A      B    C     D     E     F
@@ -171,7 +177,10 @@ func Aes_decrypt_scratch_mixcolumn(thirdstep_array [][]byte) [][]byte {
 
 func expandKey(key []byte) [][]byte {
 	var rcon byte = 1
-	var expandedKey [][]byte
+	var expandedKey = make([][]byte, 4)
+	for i := 0; i < 4; i++ {
+		expandedKey[i] = make([]byte, 40)
+	}
 	i := 0
 	for j := 0; j < 16; j += 4 {
 		expandedKey[i][0] = key[j]
@@ -180,40 +189,40 @@ func expandKey(key []byte) [][]byte {
 		expandedKey[i][3] = key[j+3]
 		i++
 	}
-	for i := 0; i < 10; i++ {
+	for i := 4; i < 40; i += 4 {
 		for j := 0; j < 4; j++ {
-			if j%4 == 0 {
+			if j == 0 {
 				// rotate
-				temp := expandedKey[0][i]
-				expandedKey[0][i] = expandedKey[1][i]
-				expandedKey[1][i] = expandedKey[2][i]
-				expandedKey[2][i] = expandedKey[3][i]
-				expandedKey[3][i] = temp
+				temp := expandedKey[0][i-1]
+				expandedKey[0][i+j] = expandedKey[1][i+j-1]
+				expandedKey[1][i+j] = expandedKey[2][i+j-1]
+				expandedKey[2][i+j] = expandedKey[3][i+j-1]
+				expandedKey[3][i+j] = temp
 				// sub byte
-				expandedKey[0][i] = subByte(expandedKey[0][i])
-				expandedKey[1][i] = subByte(expandedKey[1][i])
-				expandedKey[2][i] = subByte(expandedKey[2][i])
-				expandedKey[3][i] = subByte(expandedKey[3][i])
-				// xor dengan i-4 dan rcon i
-				expandedKey[0][i] = expandedKey[0][i] ^ expandedKey[0][i-4] ^ rcon
-				expandedKey[1][i] = expandedKey[1][i] ^ expandedKey[1][i-4]
-				expandedKey[2][i] = expandedKey[2][i] ^ expandedKey[2][i-4]
-				expandedKey[3][i] = expandedKey[3][i] ^ expandedKey[3][i-4]
+				expandedKey[0][i+j] = subByte(expandedKey[0][i+j])
+				expandedKey[1][i+j] = subByte(expandedKey[1][i+j])
+				expandedKey[2][i+j] = subByte(expandedKey[2][i+j])
+				expandedKey[3][i+j] = subByte(expandedKey[3][i+j])
+				// xor dengan i+j-4 dan rcon i+j
+				expandedKey[0][i+j] = expandedKey[0][i+j] ^ expandedKey[0][i+j-4] ^ rcon
+				expandedKey[1][i+j] = expandedKey[1][i+j] ^ expandedKey[1][i+j-4]
+				expandedKey[2][i+j] = expandedKey[2][i+j] ^ expandedKey[2][i+j-4]
+				expandedKey[3][i+j] = expandedKey[3][i+j] ^ expandedKey[3][i+j-4]
 				// increment rcon
 				rcon <<= 1
 			} else {
 				// xor dengan i-4
-				expandedKey[0][i] = expandedKey[0][i] ^ expandedKey[0][i-4]
-				expandedKey[1][i] = expandedKey[1][i] ^ expandedKey[1][i-4]
-				expandedKey[2][i] = expandedKey[2][i] ^ expandedKey[2][i-4]
-				expandedKey[3][i] = expandedKey[3][i] ^ expandedKey[3][i-4]
+				expandedKey[0][i+j] = expandedKey[0][i+j-1] ^ expandedKey[0][i+j-4]
+				expandedKey[1][i+j] = expandedKey[1][i+j-1] ^ expandedKey[1][i+j-4]
+				expandedKey[2][i+j] = expandedKey[2][i+j-1] ^ expandedKey[2][i+j-4]
+				expandedKey[3][i+j] = expandedKey[3][i+j-1] ^ expandedKey[3][i+j-4]
 			}
 		}
 	}
 	return expandedKey
 }
 
-func addRoundKey(block [][]byte, round int) [][]byte {
+func AddRoundKey(block [][]byte, round int) [][]byte {
 	var result [][]byte
 	for i := 0; i < 4; i++ {
 		for j := 0; j < 4; j++ {
