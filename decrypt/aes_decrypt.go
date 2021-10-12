@@ -235,6 +235,27 @@ func AddRoundKey(block [][]byte, round int) [][]byte {
 	return result
 }
 
+func xorBlock(block1, block2 [][]byte) [][]byte {
+	var result = make([][]byte, 4)
+	for i := 0; i < 4; i++ {
+		result[i] = make([]byte, 4)
+	}
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			result[i][j] = block1[i][j] ^ block2[i][j]
+		}
+	}
+	return result
+}
+
+func xorSlice(slice1, slice2 []byte) []byte {
+	var result = make([]byte, 16)
+	for i := 0; i < 16; i++ {
+		result[i] = slice1[i] ^ slice2[i]
+	}
+	return result
+}
+
 func rotateRow(row []byte, shift int) []byte {
 	var temp []byte = make([]byte, 4, 4)
 	for i := 0; i < 4; i++ {
@@ -242,4 +263,88 @@ func rotateRow(row []byte, shift int) []byte {
 		temp[idx] = row[i]
 	}
 	return temp
+}
+
+func Encrypt(plaintext, iv []byte) []byte {
+	// buat cipher
+	blockPlaintext := changeToMultiSlice(plaintext)
+	ciphertext := newCipher(iv)
+
+	// xor cipher yang dibuat dengan plaintext
+	ciphertext = xorBlock(ciphertext, blockPlaintext)
+	finalCiphertext := changeToSingleSlice(ciphertext)
+	// add iv ke hasil xor
+	result := make([]byte, 16+len(plaintext))
+	result = append(iv, finalCiphertext...)
+	// balikin text
+	return result
+}
+
+func Decrypt(ciphertext []byte) []byte {
+	// ambil iv
+	iv := ciphertext[:16]
+	cipherPart := ciphertext[16:]
+
+	// buat cipher
+	blockCiphertext := newCipher(iv)
+
+	// xor cipher dan ciphertext dari index blocksize
+	newCiphertext := changeToSingleSlice(blockCiphertext)
+	plaintext := xorSlice(cipherPart, newCiphertext)
+
+	// balikin text
+	return plaintext
+}
+
+func newCipher(iv []byte) [][]byte {
+	ciphertext := changeToMultiSlice(iv)
+
+	// add round key awal
+	ciphertext = AddRoundKey(ciphertext, 0)
+
+	// for 9 kali
+	for i := 0; i < 9; i++ {
+		// subbyte
+		ciphertext = Aes_decrypt_scratch_subbytes(ciphertext)
+		// shiftrow
+		ciphertext = Aes_decrypt_scratch_shiftrows(ciphertext)
+		// mix column
+		ciphertext = Aes_decrypt_scratch_mixcolumn(ciphertext)
+		// add round key
+		ciphertext = AddRoundKey(ciphertext, i+1)
+	}
+
+	// terakhir
+	// sub byte
+	ciphertext = Aes_decrypt_scratch_subbytes(ciphertext)
+	// shift row
+	ciphertext = Aes_decrypt_scratch_shiftrows(ciphertext)
+	// add round key
+	ciphertext = AddRoundKey(ciphertext, 10)
+
+	// return hasilnya
+	return ciphertext
+}
+
+func changeToMultiSlice(block []byte) [][]byte {
+	var result = make([][]byte, 4)
+	for i := 0; i < 4; i++ {
+		result[i] = make([]byte, 4)
+	}
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			result[i][j] = block[4*i+j]
+		}
+	}
+	return result
+}
+
+func changeToSingleSlice(block [][]byte) []byte {
+	var result = make([][]byte, 16)
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			block[4*i+j] = result[i][j]
+		}
+	}
+	return result
 }
