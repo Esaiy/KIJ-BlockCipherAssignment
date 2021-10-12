@@ -4,52 +4,42 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"fmt"
 	"io"
 )
 
 var key = []byte("1234567890123456")
 
-func Aes_encrypt(chunk []byte) []byte {
-	c, err := aes.NewCipher(key)
+func Encrypt(plaintext []byte) []byte {
+	if len(key) != 16 {
+		panic("key length error")
+	}
+	block, err := aes.NewCipher(key)
 	if err != nil {
-		fmt.Println(err.Error())
+		panic(err)
 	}
 
-	gcm, err := cipher.NewGCM(c)
-	if err != nil {
-		fmt.Println(err.Error())
+	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
+	iv := ciphertext[:aes.BlockSize]
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		panic(err)
 	}
-	nonce := make([]byte, gcm.NonceSize())
 
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		fmt.Println(err)
-	}
-	enc := gcm.Seal(nonce, nonce, chunk, nil)
-	return enc
+	stream := cipher.NewCTR(block, iv)
+	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
+
+	return ciphertext
 }
 
-func Aes_decrypt(chunk []byte) []byte {
-	c, err := aes.NewCipher(key)
+func Decrypt(ciphertext []byte) []byte {
+	if len(key) != 16 {
+		panic("key length error")
+	}
+	block, err := aes.NewCipher(key)
 	if err != nil {
-		fmt.Println(err)
+		panic(err)
 	}
-
-	gcm, err := cipher.NewGCM(c)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	nonceSize := gcm.NonceSize()
-	if len(chunk) < nonceSize {
-		fmt.Println(err)
-	}
-
-	nonce, chunk := chunk[:nonceSize], chunk[nonceSize:]
-	dec, err := gcm.Open(nil, nonce, chunk, nil)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-
-	return dec
+	plaintext := make([]byte, len(ciphertext)-aes.BlockSize)
+	stream := cipher.NewCTR(block, ciphertext[:aes.BlockSize])
+	stream.XORKeyStream(plaintext, ciphertext[aes.BlockSize:])
+	return plaintext
 }

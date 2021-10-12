@@ -2,10 +2,9 @@ package main
 
 import (
 	"fmt"
-	aes "kij-block-cipher/encrypt"
+	// aes "kij-block-cipher/encrypt"
+	"kij-block-cipher/pkg/aes-lib"
 	"os"
-	"strconv"
-	"time"
 
 	ipc "github.com/james-barrow/golang-ipc"
 )
@@ -39,8 +38,8 @@ func main() {
 			}
 
 			if m.MsgType == 69 {
-				filename := time.Now().Unix()
-				file, err = os.OpenFile("./dest/"+strconv.Itoa(int(filename)), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+				// filename := time.Now().Unix()
+				file, err = os.OpenFile("./dest/"+string(m.Data), os.O_CREATE|os.O_WRONLY, 0644)
 				if err != nil {
 					fmt.Println(err.Error())
 				}
@@ -48,13 +47,15 @@ func main() {
 			}
 
 			if m.MsgType == 70 {
-				data := aes.Aes_decrypt(m.Data)
+				data := aes.Decrypt(m.Data)
+				// data = m.Data
 				file.Write(data)
 				continue
 			}
 
 			if m.MsgType == 71 {
-				file.Write(m.Data)
+				data := aes.Decrypt(m.Data)
+				file.Write(data)
 				file.Close()
 				fmt.Println("File downloaded successfully")
 				continue

@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"io"
+	"kij-block-cipher/pkg/aes-lib"
 	"log"
 	"os"
-	"strconv"
 	"sync"
 
-	aes "kij-block-cipher/encrypt"
+	// aes "kij-block-cipher/encrypt"
 
 	ipc "github.com/james-barrow/golang-ipc"
 )
@@ -42,27 +42,32 @@ func main() {
 }
 
 func sendFile(sc *ipc.Server) {
-	file, err := os.Open("./dataset/Fatin - Aku memilih setia.mp3")
+	file, err := os.Open("./dataset/plrabn12.txt")
 	if err != nil {
 		log.Println("something broke :", err.Error())
 	}
 	defer file.Close()
 	fi, err := file.Stat()
-	sc.Write(69, []byte(strconv.Itoa(int(fi.Size()))))
+	sc.Write(69, []byte(fi.Name()))
 
-	const maxChunk = 2048
+	const maxChunk = 2048 - 16
 	buffer := make([]byte, maxChunk)
-
+	i := 0
 	for {
-		_, err := file.Read(buffer)
+		fmt.Println(i)
+		i++
+		n, err := file.Read(buffer)
+		buffer := buffer[:n]
 		if err != nil {
 			if err != io.EOF {
 				log.Println("reading broke :", err.Error())
 			}
 			sc.Write(71, []byte{})
+			fmt.Println("done")
 			break
 		}
-		buffer = aes.Aes_encrypt(buffer)
+		// fmt.Println(buffer)
+		buffer = aes.Encrypt(buffer)
 		sc.Write(70, buffer)
 	}
 	return

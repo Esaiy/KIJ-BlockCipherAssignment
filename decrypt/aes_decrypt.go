@@ -3,6 +3,7 @@ package decrypt
 // refference: https://www.hrpub.org/download/20171130/CSIT2-13510193.pdf
 // refference: https://www.commonlounge.com/discussion/e32fdd267aaa4240a4464723bc74d0a5
 var key = []byte("1234567890123456")
+var expandedKey = expandKey(key)
 
 var sbox = [256]byte{
 	//0     1    2      3     4    5     6     7      8    9     A      B    C     D     E     F
@@ -187,8 +188,14 @@ func expandKey(key []byte) [][]byte {
 	return expandedKey
 }
 
-func addRoundKey() {
-
+func addRoundKey(block [][]byte, round int) [][]byte {
+	var result [][]byte
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			result[i][j] = block[i][j] ^ expandedKey[i+(4*(round-1))][j]
+		}
+	}
+	return result
 }
 
 func rotateRow(row []byte, shift int) []byte {
