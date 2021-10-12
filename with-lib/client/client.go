@@ -54,8 +54,8 @@ func main() {
 			}
 
 			if m.MsgType == 71 {
-				data := aes.Decrypt(m.Data)
-				file.Write(data)
+				// data := aes.Decrypt(m.Data)
+				// file.Write(data)
 				file.Close()
 				fmt.Println("File downloaded successfully")
 				continue
