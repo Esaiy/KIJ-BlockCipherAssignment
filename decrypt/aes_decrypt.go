@@ -308,12 +308,52 @@ func rotateRow(row []byte, shift int) []byte {
 	return temp
 }
 
-func Encrypt()(plaintext, iv []byte) []byte {
-	
+func incrementIV(iv *[]byte) {
+	// increment
+	iv = iv
+}
+
+func Encrypt(plaintext, iv []byte) []byte {
+	ciphertext := make([]byte, 2048)
+	// tambahin iv
+	ciphertext = append(ciphertext, iv...)
+	// if len > 16
+	for len(plaintext) >= 16 {
+		// ambil 16 awal, enkrip, append
+		b := plaintext[:16]
+		ciphertext = append(ciphertext, Encrypt16Byte(b, iv)...)
+		incrementIV(&iv)
+		plaintext = plaintext[16:]
+	}
+	// if len > 0
+	if len(plaintext) > 0 {
+		// ambil sebanyak len, enkrip, append
+		b := plaintext[:len(plaintext)]
+		ciphertext = append(ciphertext, Encrypt16Byte(b, iv)...)
+	}
+	return ciphertext
 }
 
 func Decrypt(ciphertext []byte) []byte {
-
+	plaintext := make([]byte, 2048)
+	// ambil iv
+	iv := ciphertext[:16]
+	ciphertext = ciphertext[16:]
+	// if len > 16
+	for len(ciphertext) > 16 {
+		// ambil 16 awal, enkrip, append
+		b := ciphertext[:16]
+		plaintext = append(plaintext, Decrypt16Byte(b, iv)...)
+		incrementIV(&iv)
+	}
+	// if len > 0
+	if len(ciphertext) > 16 {
+		// ambil sebanyak len, enkrip, append
+		b := ciphertext[:len(ciphertext)]
+		plaintext = append(plaintext, Decrypt16Byte(b, iv)...)
+	}
+	// udah
+	return plaintext
 }
 
 func Encrypt16Byte(plaintext, iv []byte) []byte {
@@ -331,9 +371,8 @@ func Encrypt16Byte(plaintext, iv []byte) []byte {
 	return result
 }
 
-func Decrypt16Byte(ciphertext []byte) []byte {
+func Decrypt16Byte(ciphertext []byte, iv []byte) []byte {
 	// ambil iv
-	iv := ciphertext[:16]
 	cipherPart := ciphertext[16:]
 
 	// buat cipher
