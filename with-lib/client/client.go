@@ -14,7 +14,7 @@ import (
 func main() {
 	config := &ipc.ClientConfig{Encryption: false}
 
-	cc, err := ipc.StartClient("testtest", config)
+	cc, err := ipc.StartClient("testlib", config)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -32,9 +32,9 @@ func main() {
 				break
 			}
 
-			if m.MsgType == -1 { // message type -1 is status change
-				//fmt.Println("Status: " + m.Status)
-			}
+			// if m.MsgType == -1 { // message type -1 is status change
+			// 	//fmt.Println("Status: " + m.Status)
+			// }
 
 			if m.MsgType == -2 { // message type -2 is an error, these won't automatically cause the recieve channel to close.
 				fmt.Println("Error: " + err.Error())

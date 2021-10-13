@@ -20,6 +20,7 @@ func main() {
 
 	var file *os.File
 	go func(file *os.File) {
+		average := []int64{}
 		for {
 			m, err := cc.Read()
 
@@ -29,9 +30,9 @@ func main() {
 				break
 			}
 
-			if m.MsgType == -1 { // message type -1 is status change
-				//fmt.Println("Status: " + m.Status)
-			}
+			// if m.MsgType == -1 { // message type -1 is status change
+			// 	//fmt.Println("Status: " + m.Status)
+			// }
 
 			if m.MsgType == -2 { // message type -2 is an error, these won't automatically cause the recieve channel to close.
 				fmt.Println("Error: " + err.Error())
@@ -54,10 +55,16 @@ func main() {
 			}
 
 			if m.MsgType == 71 {
-				data := decrypt.Decrypt(m.Data)
-				file.Write(data)
+				// data := aes.Decrypt(m.Data)
+				// file.Write(data)
 				file.Close()
 				fmt.Println("File downloaded successfully")
+				var total int64 = 0
+				for i := range average {
+					total += average[i]
+				}
+				hasil := float64(total) / float64(len(average))
+				fmt.Println("Average decrypt time :", hasil, "microsecond")
 				continue
 			}
 

@@ -17,7 +17,7 @@ import (
 func main() {
 	var wg sync.WaitGroup
 	config := &ipc.ServerConfig{Encryption: false}
-	sc, err := ipc.StartServer("testtest", config)
+	sc, err := ipc.StartServer("testlib", config)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -49,6 +49,9 @@ func sendFile(sc *ipc.Server) {
 	}
 	defer file.Close()
 	fi, err := file.Stat()
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 	sc.Write(69, []byte(fi.Name()))
 
 	const maxChunk = 2048 - 16

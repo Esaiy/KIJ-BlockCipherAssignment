@@ -30,7 +30,7 @@ var sbox = [256]byte{
 	0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf, //E
 	0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16} //F
 
-func Aes_decrypt_scratch_subbytes(ready_to_change_1_dim [4][4]byte) []byte {
+func Aes_decrypt_scratch_subbytes(ready_to_change_1_dim [][]byte) []byte {
 	// hex value sbox
 
 	// ubah jadi 1 dimensi
@@ -47,7 +47,7 @@ func Aes_decrypt_scratch_subbytes(ready_to_change_1_dim [4][4]byte) []byte {
 	return new_array
 }
 
-func convertToOneDimension(ready_to_change_1_dim [4][4]byte) []byte {
+func convertToOneDimension(ready_to_change_1_dim [][]byte) []byte {
 	// ubah jadi 1 dimensi
 	firststep_array := make([]byte, 16)
 	count_convert := 0
@@ -164,8 +164,7 @@ func multiply_by_2(the_value byte) byte {
 }
 
 func multiply_by_3(the_value byte) byte {
-	var the_result byte
-	the_result = multiply_by_2(the_value) ^ the_value
+	var the_result byte = multiply_by_2(the_value) ^ the_value
 	return the_result
 }
 
@@ -222,7 +221,7 @@ func expandKey(key []byte) [][]byte {
 	var rcon byte = 1
 	var expandedKey = make([][]byte, 4)
 	for i := 0; i < 4; i++ {
-		expandedKey[i] = make([]byte, 40)
+		expandedKey[i] = make([]byte, 44)
 	}
 	i := 0
 	for j := 0; j < 16; j += 4 {
@@ -232,7 +231,7 @@ func expandKey(key []byte) [][]byte {
 		expandedKey[i][3] = key[j+3]
 		i++
 	}
-	for i := 4; i < 40; i += 4 {
+	for i := 4; i <= 40; i += 4 {
 		for j := 0; j < 4; j++ {
 			if j == 0 {
 				// rotate
@@ -293,24 +292,24 @@ func xorBlock(block1, block2 [][]byte) [][]byte {
 
 func xorSlice(slice1, slice2 []byte) []byte {
 	var result = make([]byte, 16)
-	for i := 0; i < 16; i++ {
+	for i := 0; i < len(slice1); i++ {
 		result[i] = slice1[i] ^ slice2[i]
 	}
 	return result
 }
 
-func rotateRow(row []byte, shift int) []byte {
-	var temp []byte = make([]byte, 4, 4)
-	for i := 0; i < 4; i++ {
-		idx := (i + (4 - shift)) % 4
-		temp[idx] = row[i]
-	}
-	return temp
-}
-
 func incrementIV(iv *[]byte) {
 	// increment
-	iv = iv
+	idx := 0
+	for {
+		if (*iv)[idx] == 0xff {
+			(*iv)[idx]++
+			idx++
+		} else {
+			(*iv)[idx]++
+			break
+		}
+	}
 }
 
 func Encrypt(plaintext, iv []byte) []byte {
@@ -328,7 +327,7 @@ func Encrypt(plaintext, iv []byte) []byte {
 	// if len > 0
 	if len(plaintext) > 0 {
 		// ambil sebanyak len, enkrip, append
-		b := plaintext[:len(plaintext)]
+		b := plaintext[:]
 		ciphertext = append(ciphertext, Encrypt16Byte(b, iv)...)
 	}
 	return ciphertext
@@ -349,7 +348,7 @@ func Decrypt(ciphertext []byte) []byte {
 	// if len > 0
 	if len(ciphertext) > 16 {
 		// ambil sebanyak len, enkrip, append
-		b := ciphertext[:len(ciphertext)]
+		b := ciphertext[:]
 		plaintext = append(plaintext, Decrypt16Byte(b, iv)...)
 	}
 	// udah
@@ -365,8 +364,7 @@ func Encrypt16Byte(plaintext, iv []byte) []byte {
 	ciphertext = xorBlock(ciphertext, blockPlaintext)
 	finalCiphertext := changeToSingleSlice(ciphertext)
 	// add iv ke hasil xor
-	result := make([]byte, 16+len(plaintext))
-	result = append(iv, finalCiphertext...)
+	result := append(iv, finalCiphertext...)
 	// balikin text
 	return result
 }
@@ -395,9 +393,8 @@ func newCipher(iv []byte) [][]byte {
 	// for 9 kali
 	for i := 0; i < 9; i++ {
 		// subbyte
-		ciphertext = Aes_decrypt_scratch_subbytes(ciphertext)
 		// shiftrow
-		ciphertext = Aes_decrypt_scratch_shiftrows(ciphertext)
+		ciphertext = Aes_decrypt_scratch_shiftrows(Aes_decrypt_scratch_subbytes(ciphertext))
 		// mix column
 		ciphertext = Aes_decrypt_scratch_mixcolumn(ciphertext)
 		// add round key
@@ -406,10 +403,9 @@ func newCipher(iv []byte) [][]byte {
 
 	// terakhir
 	// sub byte
-	ciphertext = Aes_decrypt_scratch_subbytes(ciphertext)
 	// shift row
-	ciphertext = Aes_decrypt_scratch_shiftrows(ciphertext)
-	// add round key
+	ciphertext = Aes_decrypt_scratch_shiftrows(Aes_decrypt_scratch_subbytes(ciphertext))
+	// add round keyD
 	ciphertext = AddRoundKey(ciphertext, 10)
 
 	// return hasilnya
@@ -417,12 +413,15 @@ func newCipher(iv []byte) [][]byte {
 }
 
 func changeToMultiSlice(block []byte) [][]byte {
-	var result = make([][]byte, 4)
+	result := make([][]byte, 4)
+	lenBlock := len(block)
+	row := lenBlock / 4
+	col := lenBlock % 4
 	for i := 0; i < 4; i++ {
 		result[i] = make([]byte, 4)
 	}
-	for i := 0; i < 4; i++ {
-		for j := 0; j < 4; j++ {
+	for i := 0; i < row; i++ {
+		for j := 0; j < col; j++ {
 			result[i][j] = block[4*i+j]
 		}
 	}
@@ -430,10 +429,11 @@ func changeToMultiSlice(block []byte) [][]byte {
 }
 
 func changeToSingleSlice(block [][]byte) []byte {
-	var result = make([][]byte, 16)
-	for i := 0; i < 4; i++ {
-		for j := 0; j < 4; j++ {
-			block[4*i+j] = result[i][j]
+	var result = make([]byte, 16)
+	lenBlock := len(block)
+	for i := 0; i < lenBlock; i++ {
+		for j := 0; j < len(block[i]); j++ {
+			result[4*i+j] = block[i][j]
 		}
 	}
 	return result
